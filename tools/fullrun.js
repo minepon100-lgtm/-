@@ -107,7 +107,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
   const state = () => ev(() => { const s = Core.state(); return { ...s.dungeon, bag: s.bag, done: Core.floorState(s.dungeon.floor).done, screen: UI.currentScreen() }; });
 
-  function bfs(grid, from, goal, hasKey) {
+  function bfs(grid, from, goal, hasKey, doneG = new Set()) {
     const key = (x, y) => x + ',' + y;
     const prev = new Map([[key(from.x, from.y), null]]);
     const q = [[from.x, from.y]];
@@ -118,7 +118,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
         const nx = x + dx, ny = y + dy, c = grid[ny][nx];
         if (c === '#' || (c === 'L' && !hasKey)) continue;
         // 目的地以外の階段・番人は避ける
-        if ((c === 'U' || c === 'S' || c === 'X' || c === 'B') && !(nx === goal.x && ny === goal.y)) continue;
+        if ((c === 'U' || c === 'S' || ((c === 'X' || c === 'B') && !doneG.has(nx + ',' + ny))) && !(nx === goal.x && ny === goal.y)) continue;
         const k = key(nx, ny); if (prev.has(k)) continue;
         prev.set(k, [x, y, dir]); q.push([nx, ny]);
       }
@@ -198,7 +198,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       if (s.floor !== floor || s.screen !== 'dungeon') return 'moved';
       if (s.x === goal.x && s.y === goal.y) { const r = await handle(want); if (want && !r) { await page.keyboard.press('Enter'); return (await handle(want)) || 'arrived'; } return r || 'arrived'; }
       const grid = await ev((f) => MAPS[f].grid, floor);
-      const p = bfs(grid, s, goal, !!s.bag.abyss_key);
+      const p = bfs(grid, s, goal, !!s.bag.abyss_key, new Set(Object.keys(s.done).filter((k) => k[0] === 'G').map((k) => k.slice(1))));
       if (!p) return 'nopath';
       for (const dir of p) {
         await stepDir(dir);
@@ -260,6 +260,8 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
       }
     }
     if (cleared) break;
+    // 番人の奥にある鍵を回収
+    for (const k of find(grid, 'K')) if (!(await state()).bag.abyss_key) log(`鍵: ${await goto(floor, k, null)} key=${!!(await state()).bag.abyss_key}`);
     if (await needRest()) await townTrip(floor);
     const sPos = find(grid, 'S')[0];
     const r = await goto(floor, sPos, 'down');
