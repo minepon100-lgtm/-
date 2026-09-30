@@ -67,10 +67,17 @@ window.Town = (() => {
     const cost2 = all.reduce((a, c) => a + c.lv * 10, 0);
     const v = await UI.modal({
       title: '宿屋「奈落の灯」',
-      html: `<p>「いらっしゃい。ゆっくり休んでいきな」</p><p class="hint">休むとHP・MPが全快し、毒と眠りが治ります（戦闘不能は治りません）。</p>`,
-      buttons: [{ label: `パーティで泊まる (${cost1} G)`, value: 'party', disabled: s.gold < cost1, cls: 'primary' }, { label: `仲間全員で泊まる (${cost2} G)`, value: 'all', disabled: s.gold < cost2 }, { label: '出る', value: null }],
+      html: `<p>「いらっしゃい。ゆっくり休んでいきな」</p><p class="hint">休むとHP・MPが全快し、毒と眠りが治ります（戦闘不能は治りません）。馬小屋なら無料ですが、MPは回復しません。</p>`,
+      buttons: [{ label: `パーティで泊まる (${cost1} G)`, value: 'party', disabled: s.gold < cost1, cls: 'primary' }, { label: `仲間全員で泊まる (${cost2} G)`, value: 'all', disabled: s.gold < cost2 }, { label: '馬小屋 (無料・HPのみ)', value: 'stable' }, { label: '出る', value: null }],
     });
     if (!v) return;
+    if (v === 'stable') {
+      all.forEach((c) => { c.hp = Core.stats(c).maxHp; c.status.poison = false; c.status.sleep = false; });
+      Core.save();
+      await UI.alert('馬小屋', '藁の上で一晩を過ごした。\n全員のHPが回復した！（MPは回復しない）');
+      show();
+      return;
+    }
     const list = v === 'party' ? party : all;
     s.gold -= v === 'party' ? cost1 : cost2;
     list.forEach(Core.fullHeal);

@@ -467,7 +467,7 @@ window.Battle = (() => {
       exp += e.def.exp; gold += e.def.gold;
       for (const [id, pct] of e.def.drops || []) if (Core.chance(pct)) drops.push(id);
     }
-    gold = Math.floor(gold * Core.randf(0.9, 1.2));
+    gold = Math.floor(gold * 1.6 * Core.randf(0.9, 1.2));
     s.gold += gold;
     drops.forEach((id) => Core.addItem(id));
     const msgs = [];

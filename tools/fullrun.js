@@ -32,6 +32,15 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   await page.click('.modal .btn.primary');
   await page.click('.modal .btn');
   await ev(() => { Core.state().settings.speed = 3; });
+  // 初期資金で10連招来（プレイヤーと同じく）
+  await page.click('[data-act=gacha]');
+  await page.click('[data-act=pull][data-arg="10"]');
+  await sleep(300);
+  await page.click('.modal .btn.primary');
+  await page.click('[data-act=back]');
+  await page.click('[data-act=formation]');
+  await page.click('[data-act=auto]');
+  await page.click('[data-act=back]');
 
   let wipes = 0, battles = 0, townTrips = 0;
 
@@ -154,11 +163,12 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     // 宿屋
     await page.click('[data-act=inn]');
     const inn = await page.$('.modal .btn.primary:not([disabled])');
-    if (inn) { await inn.click(); await page.click('.modal .btn'); } else await page.click('.modal-wrap .btn >> text=出る');
+    if (inn) await inn.click(); else await page.click('.modal-wrap .btn >> text=馬小屋');
+    await page.click('.modal .btn');
     // 装備更新（商店のロジックに沿って購入）
     await ev(() => {
       const s = Core.state(); const D = DATA; const tier = Core.shopTier();
-      const buy = (id) => { const it = D.ITEMS[id]; if (s.gold - it.price < 500) return false; s.gold -= it.price; Core.addItem(id); return true; };
+      const buy = (id) => { const it = D.ITEMS[id]; if (s.gold - it.price < 2000) return false; s.gold -= it.price; Core.addItem(id); return true; };
       for (const c of Core.partyMembers()) for (const slot of ['weapon', 'armor']) {
         const key = slot === 'weapon' ? (c.cls === 'mage' ? 'mat' : 'atk') : 'def';
         const cur = c.equip[slot] ? (D.ITEMS[c.equip[slot]][key] || 0) : 0;
@@ -270,6 +280,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     for (const k of find(grid, 'K')) if (!(await state()).bag.abyss_key) log(`鍵: ${await goto(floor, k, null)} key=${!!(await state()).bag.abyss_key}`);
     if (await needRest()) await townTrip(floor);
     const sPos = find(grid, 'S')[0];
+    if (!sPos) break;
     const r = await goto(floor, sPos, 'down');
     log(`B${floor}F 下り階段: ${r}`);
     if ((await state()).floor !== floor + 1) { log('下りられなかった'); break; }
