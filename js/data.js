@@ -166,7 +166,7 @@ window.DATA = (() => {
       skills: [{ name: '叩き潰し', type: 'phys', power: 1.6, target: 'one', rate: 25 }], drops: [['great_axe', 4]] },
     abyss_mage: { name: '奈落の魔術師', hp: 90, atk: 20, def: 12, mat: 38, agi: 20, exp: 170, gold: 150, color: '#a040c0', shape: 'caster',
       skills: [{ name: '爆炎', type: 'magic', power: 0.9, target: 'all', rate: 35 }, { name: '氷槍', type: 'magic', power: 1.5, target: 'one', rate: 25 }], drops: [['sage_pendant', 3], ['ether', 15]] },
-    abyss_lord: { name: '深淵の番人 ヴォルガス', hp: 2200, atk: 52, def: 22, mat: 44, agi: 22, exp: 3500, gold: 8000, boss: true, final: true, actions: 2, color: '#d04070', shape: 'lord', scale: 1.6,
+    abyss_lord: { name: '深淵の番人 ヴォルガス', hp: 1800, atk: 46, def: 20, mat: 40, agi: 22, exp: 3500, gold: 8000, boss: true, final: true, actions: 2, color: '#d04070', shape: 'lord', scale: 1.6,
       skills: [{ name: '深淵の炎', type: 'magic', power: 0.9, target: 'all', rate: 25 }, { name: '叩き潰し', type: 'phys', power: 1.7, target: 'one', rate: 25 },
         { name: '魂砕きの咆哮', type: 'debuff', inflict: 'sleep', chance: 30, target: 'all', rate: 10 }], drops: [['abyss_blade', 100], ['abyss_amulet', 100]] },
   };

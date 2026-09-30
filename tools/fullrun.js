@@ -140,7 +140,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   }
 
   async function needRest() {
-    return ev(() => { const m = Core.partyMembers(); const hp = m.reduce((a, c) => a + c.hp, 0); const mx = m.reduce((a, c) => a + Core.stats(c).maxHp, 0); const mp = m.filter((c) => DATA.CLASSES[c.cls].caster).every((c) => c.mp < 6); return m.some((c) => c.status.dead) || hp / mx < 0.45 || mp; });
+    return ev(() => { const m = Core.partyMembers(); const hp = m.reduce((a, c) => a + c.hp, 0); const mx = m.reduce((a, c) => a + Core.stats(c).maxHp, 0); const cs = m.filter((c) => DATA.CLASSES[c.cls].caster && !c.status.dead); const mp = cs.length > 0 && cs.every((c) => c.mp < 6); return m.some((c) => c.status.dead) || hp / mx < 0.45 || mp; });
   }
 
   async function townTrip(floor) {
@@ -158,7 +158,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     // 装備更新（商店のロジックに沿って購入）
     await ev(() => {
       const s = Core.state(); const D = DATA; const tier = Core.shopTier();
-      const buy = (id) => { const it = D.ITEMS[id]; if (s.gold - it.price < 1500) return false; s.gold -= it.price; Core.addItem(id); return true; };
+      const buy = (id) => { const it = D.ITEMS[id]; if (s.gold - it.price < 500) return false; s.gold -= it.price; Core.addItem(id); return true; };
       for (const c of Core.partyMembers()) for (const slot of ['weapon', 'armor']) {
         const key = slot === 'weapon' ? (c.cls === 'mage' ? 'mat' : 'atk') : 'def';
         const cur = c.equip[slot] ? (D.ITEMS[c.equip[slot]][key] || 0) : 0;
@@ -174,16 +174,16 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     });
     // 招来
     const gold = await ev(() => Core.state().gold);
-    if (gold > 9000) {
+    if (gold > 5000) {
       await page.click('[data-act=gacha]');
       await page.click('[data-act=pull][data-arg="10"]');
       await sleep(300);
       await page.click('.modal .btn.primary');
       await page.click('[data-act=back]');
-      await page.click('[data-act=formation]');
-      await page.click('[data-act=auto]');
-      await page.click('[data-act=back]');
     }
+    await page.click('[data-act=formation]');
+    await page.click('[data-act=auto]');
+    await page.click('[data-act=back]');
     // 再突入
     await page.click('[data-act=dungeon]');
     const label = await ev((f) => MAPS[f].name.replace('第一奈落 ', ''), floor);
@@ -217,6 +217,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
     for (let i = 0; i < 3000; i++) {
       const hlv = await ev(() => Math.min(...Core.partyMembers().map((c) => c.lv)));
       if (hlv >= lv) return;
+      if (i % 100 === 0) log(`grind B${floor} step${i} minLv=${hlv}/${lv} screen=${(await state()).screen} battles=${battles}`, JSON.stringify(await ev(() => ({ ...Dungeon.debug(), pos: Core.state().dungeon, modal: !!document.querySelector('.modal-wrap'), party: Core.partyMembers().map((c) => c.name + (c.status.dead ? '†' : '') + c.lv) }))));
       const s = await state();
       if (s.screen !== 'dungeon') { await townTrip(floor); continue; }
       const grid = await ev((f) => MAPS[f].grid, floor);
@@ -235,7 +236,12 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
   await page.click('.modal .btn.primary');
   await page.waitForSelector('#view');
   let cleared = false;
-  for (let floor = 1; floor <= 4 && !cleared; floor++) {
+  const startFloor = +(process.env.START_FLOOR || 1);
+  if (startFloor > 1) {
+    await ev((f) => { const s = Core.state(); s.deepest = f; s.gold = 20000; for (const c of Core.partyMembers()) { while (c.lv < 3 * f - 1) Core.levelUp(c, true); Core.fullHeal(c); } Dungeon.enter(f); }, startFloor);
+    await townTrip(startFloor);
+  }
+  for (let floor = startFloor; floor <= 4 && !cleared; floor++) {
     const grid = await ev((f) => MAPS[f].grid, floor);
     log(`== B${floor}F 開始`, JSON.stringify(await ev(() => ({ gold: Core.state().gold, lv: Core.partyMembers().map((c) => c.name + c.lv) }))));
     const targets = [...find(grid, 'T'), ...find(grid, 'K'), ...'123456789'.split('').flatMap((d) => find(grid, d))];

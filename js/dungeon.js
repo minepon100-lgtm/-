@@ -213,7 +213,7 @@ window.Dungeon = (() => {
         if (res === 'win') {
           done['G' + key] = true;
           Core.save();
-          if (g.final) { await clearGame(); return true; }
+          if (g.final) { show(); busy = true; await clearGame(); return true; }
           show();
           addLog(`${g.name} を打ち倒した！`);
         } else if (res === 'lose') { await wipe(); }
@@ -532,5 +532,5 @@ window.Dungeon = (() => {
     busy = false;
   }
 
-  return { enter, show, rollGroup, returnToTown, draw };
+  return { enter, show, rollGroup, returnToTown, draw, debug: () => ({ busy }) };
 })();

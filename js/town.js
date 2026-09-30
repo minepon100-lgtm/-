@@ -84,14 +84,14 @@ window.Town = (() => {
     const dead = Object.values(s.chars).filter((c) => c.status.dead);
     const poisoned = Object.values(s.chars).filter((c) => !c.status.dead && c.status.poison);
     const html = `<p>「迷える者よ、神の御前へ」</p>
-      ${dead.length ? `<table class="list">${dead.map((c) => `<tr><td>${esc(c.name)} Lv${c.lv}</td><td>${c.lv * 100} G</td>
-        <td><button class="btn sm primary" data-act="revive" data-arg="${c.uid}" ${s.gold < c.lv * 100 ? 'disabled' : ''}>蘇生</button></td></tr>`).join('')}</table>` : '<p class="hint">戦闘不能の仲間はいません。</p>'}
+      ${dead.length ? `<table class="list">${dead.map((c) => `<tr><td>${esc(c.name)} Lv${c.lv}</td><td>${c.lv * 50} G</td>
+        <td><button class="btn sm primary" data-act="revive" data-arg="${c.uid}" ${s.gold < c.lv * 50 ? 'disabled' : ''}>蘇生</button></td></tr>`).join('')}</table>` : '<p class="hint">戦闘不能の仲間はいません。</p>'}
       ${poisoned.length ? `<p><button class="btn" data-act="cure">毒の治療 (${poisoned.length * 20} G)</button></p>` : ''}`;
     await UI.modal({
       title: '寺院', html, buttons: [{ label: '出る', value: null }],
       handlers: {
         revive: (uid, el, api) => {
-          const c = s.chars[uid]; const cost = c.lv * 100;
+          const c = s.chars[uid]; const cost = c.lv * 50;
           if (s.gold < cost) return;
           s.gold -= cost; c.status.dead = false; Core.fullHeal(c); Core.save();
           api.close(); UI.toast(`${c.name} は息を吹き返した！`); setTimeout(temple, 50);
